@@ -1,16 +1,27 @@
+#!/usr/bin/env node
+
 import inquirer from "inquirer";
 import fs from "node:fs/promises";
+import { fileURLToPath } from "node:url";
+import { dirname, join } from "node:path";
+import { parseArgs } from "node:util";
 
-const flags = [];
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const dataPath = join(__dirname, "data.json");
 
-process.argv.forEach((arg) => {
-  if (/^-/.test(arg)) {
-    flags.push(arg.replaceAll("-", ""));
-  }
-});
+const options = {
+  add: {
+    type: "boolean",
+    short: "a",
+  },
+};
+
+const {
+  values: { add },
+} = parseArgs({ options });
 
 const askQuestion = async () => {
-  const data = await fs.readFile("src/data.json");
+  const data = await fs.readFile(dataPath);
   const parsedData = JSON.parse(data.toString());
 
   const target = parsedData[Math.floor(Math.random() * parsedData.length)];
@@ -27,7 +38,7 @@ const askQuestion = async () => {
   const newData = parsedData.filter((item) => item.id !== target.id);
   newData.push(target);
 
-  await fs.writeFile("src/data.json", JSON.stringify(newData));
+  await fs.writeFile(dataPath, JSON.stringify(newData));
 };
 
 const checkAnswer = async (input, answer) => {
@@ -52,7 +63,7 @@ const addQuestion = async () => {
     { type: "input", name: "answer", message: "What's the answer?" },
   ]);
   console.log(responses);
-  const data = await fs.readFile("src/data.json");
+  const data = await fs.readFile(dataPath);
   const parsedData = JSON.parse(data.toString());
 
   const newQuestion = {
@@ -69,7 +80,7 @@ const addQuestion = async () => {
   );
 };
 
-if (flags.includes("a") || flags.includes("add")) {
+if (add) {
   addQuestion();
 } else {
   askQuestion();
